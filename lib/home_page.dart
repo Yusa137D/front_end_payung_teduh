@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'home_page2.dart'; // Ganti ke home_page2.dart
-import 'source_model.dart'; // Import model OOP
+import 'package:getwidget/getwidget.dart';
+import 'home_page2.dart';
+import 'model/source_model.dart';
 
 class HomePage extends StatelessWidget {
   final String username;
@@ -24,7 +25,11 @@ class HomePage extends StatelessWidget {
                       const CircleAvatar(
                         radius: 28,
                         backgroundColor: Colors.black,
-                        child: Icon(Icons.person, color: Colors.white, size: 32),
+                        child: Icon(
+                          Icons.person,
+                          color: Colors.white,
+                          size: 32,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -53,35 +58,29 @@ class HomePage extends StatelessWidget {
                   itemCount: items.length,
                   itemBuilder: (context, index) {
                     final item = items[index];
-                    return Container(
-                      margin: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF8e2de2), Color(0xFFb2f0ff)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
+                    return GFCard(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      boxFit: BoxFit.cover,
+                      color: const Color(0xFF8e2de2),
+                      content: GFListTile(
+                        avatar: GFAvatar(
+                          backgroundColor: Colors.white,
+                          child: Icon(
+                            item.icon,
+                            color: Colors.deepPurple,
+                            size: 32,
                           ),
-                        ],
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-                        leading: Icon(item.icon, color: Colors.white, size: 36),
-                        title: Text(
-                          item.name,
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white),
                         ),
-                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 20),
+                        titleText: item.name,
+                        subTitleText: item.desc,
+                        icon: const Icon(
+                          Icons.arrow_forward_ios,
+                          color: Colors.white,
+                        ),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => ListingItemPage(item: item), // home_page2.dart
+                              builder: (context) => ListingItemPage(item: item),
                             ),
                           );
                         },

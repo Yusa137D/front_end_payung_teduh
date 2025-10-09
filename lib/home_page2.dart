@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'source_model.dart';
+import 'model/source_model.dart';
 
 class ListingItemPage extends StatelessWidget {
   final Item item;
