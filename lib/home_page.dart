@@ -1,11 +1,124 @@
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
-import 'home_page2.dart';
-import 'model/source_model.dart';
+import 'services/city_service.dart';
 
-class HomePage extends StatelessWidget {
+// Model untuk data kota
+class CityModel {
+  final String id;
+  final String name;
+  final String desc;
+  final IconData icon;
+
+  CityModel({
+    required this.id,
+    required this.name,
+    required this.desc,
+    required this.icon,
+  });
+
+  factory CityModel.fromJson(Map<String, dynamic> json) {
+    return CityModel(
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
+      desc: json['description'] ?? '',
+      icon: Icons.location_city, // Default icon
+    );
+  }
+}
+
+// Halaman detail kota
+class CityDetailPage extends StatelessWidget {
+  final CityModel city;
+
+  const CityDetailPage({super.key, required this.city});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(city.name), backgroundColor: Colors.teal),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.teal, Colors.tealAccent],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(city.icon, size: 64, color: Colors.teal),
+                    const SizedBox(height: 16),
+                    Text(
+                      city.name,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      city.desc,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
   final String username;
-  const HomePage({super.key, required this.username});
+  final bool isAdmin;
+  const HomePage({super.key, required this.username, required this.isAdmin});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final CityService _cityService = CityService();
+
+  Future<List<CityModel>> _loadCities() async {
+    try {
+      final result = await _cityService.getCities();
+      if (result['success'] == true && result['data'] != null) {
+        final List<dynamic> citiesData = result['data'];
+        return citiesData.map((city) => CityModel.fromJson(city)).toList();
+      }
+      throw Exception(result['message'] ?? 'Failed to load cities');
+    } catch (e) {
+      throw Exception('Failed to load cities: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +130,7 @@ class HomePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile di kiri atas
+                // 🔹 Profile di kiri atas
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
@@ -33,7 +146,7 @@ class HomePage extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        username,
+                        widget.username,
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -42,49 +155,139 @@ class HomePage extends StatelessWidget {
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 16),
+
+                // 🔹 Judul daftar kota
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(
-                    'Daftar Barang:',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    'Daftar Kota:',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueAccent,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return GFCard(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      boxFit: BoxFit.cover,
-                      color: const Color(0xFF8e2de2),
-                      content: GFListTile(
-                        avatar: GFAvatar(
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            item.icon,
-                            color: Colors.deepPurple,
-                            size: 32,
-                          ),
-                        ),
-                        titleText: item.name,
-                        subTitleText: item.desc,
-                        icon: const Icon(
-                          Icons.arrow_forward_ios,
-                          color: Colors.white,
-                        ),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => ListingItemPage(item: item),
+
+                // 🔹 List kota dari API
+                FutureBuilder<List<CityModel>>(
+                  future: _loadCities(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    final cities = snapshot.data ?? [];
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      itemCount: cities.length,
+                      itemBuilder: (context, index) {
+                        final city = cities[index];
+                        return GFCard(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          boxFit: BoxFit.cover,
+                          color: Colors.blueAccent,
+                          borderRadius: BorderRadius.circular(12),
+                          content: GFListTile(
+                            avatar: GFAvatar(
+                              radius: 24,
+                              backgroundColor: Colors.white,
+                              child: Icon(
+                                city.icon,
+                                color: Colors.blueAccent,
+                                size: 32,
+                              ),
                             ),
-                          );
-                        },
-                      ),
+                            titleText: city.name,
+                            subTitleText: city.desc,
+                            icon: widget.isAdmin
+                                ? GestureDetector(
+                                    onTap: () async {
+                                      // Konfirmasi hapus
+                                      bool confirm =
+                                          await showDialog(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              title: const Text('Hapus Kota'),
+                                              content: Text(
+                                                'Yakin ingin menghapus kota ${city.name}?',
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                        context,
+                                                        false,
+                                                      ),
+                                                  child: const Text('Batal'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                        context,
+                                                        true,
+                                                      ),
+                                                  child: const Text('Hapus'),
+                                                ),
+                                              ],
+                                            ),
+                                          ) ??
+                                          false;
+
+                                      if (confirm) {
+                                        print(
+                                          'Menghapus kota dengan ID: ${city.id}',
+                                        );
+                                        final result = await _cityService
+                                            .deleteCity(city.id);
+                                        print('Hasil penghapusan: $result');
+                                        if (result['success'] == true) {
+                                          setState(() {}); // Refresh list
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  result['message'] ??
+                                                      'Kota berhasil dihapus',
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      }
+                                    },
+                                    child: const Icon(
+                                      Icons.delete,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: Colors.white,
+                                  ),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      CityDetailPage(city: city),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
                     );
                   },
                 ),

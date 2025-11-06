@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen>
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/back2.png'),
+            image: AssetImage('assets/images/3.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -56,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen>
               children: [
                 CircleAvatar(
                   radius: 110,
-                  backgroundImage: AssetImage('assets/images/your_logo.png'),
+                  backgroundImage: AssetImage('assets/images/1.png'),
                   backgroundColor: Colors.transparent,
                 ),
                 const SizedBox(height: 24),
